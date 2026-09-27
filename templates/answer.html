@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinzoku.ai | Startup Advisor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-page: #ffffff;
+            --bg-dark-element: #09090b;
+            --bg-dark-hover: #18181b;
+
+            --text-on-white: #09090b;
+            --text-on-dark: #f4f4f5;
+            --text-muted-dark: #a1a1aa;
+
+            --border-on-white: rgba(0, 0, 0, 0.08);
+            --border-on-dark: rgba(255, 255, 255, 0.12);
+
+            --accent-indigo: #6366f1;
+            --accent-cyan: #06b6d4;
+            --shark-bg: #111827;
+            --shark-accent: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-on-white);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(0, 0, 0, 0.02), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 0, 0, 0.02), transparent 25%);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+
+        .app-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
+
+        .top-bar {
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-on-white);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 10;
+        }
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--accent-cyan), var(--accent-indigo));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 2rem 15% 12rem 15%;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+        }
+
+        .welcome-screen { margin-top: 15vh; text-align: center; animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .greeting {
+            font-family: 'Outfit', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #09090b 0%, #71717a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+        }
+        .subtitle { font-size: 1.5rem; color: #52525b; font-family: 'Inter', sans-serif; font-weight: 400; }
+
+        .input-container-fixed {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            padding: 2rem 15% 2rem 15%;
+            background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.95) 40%, rgba(255,255,255,1) 100%);
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .gemini-input-wrapper {
+            width: 100%; max-width: 900px;
+            background: var(--bg-dark-element);
+            border: 1px solid #27272a;
+            border-radius: 24px;
+            padding: 0.75rem 1.25rem;
+            display: flex; align-items: flex-end;
+            gap: 1rem;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        .gemini-input-wrapper:focus-within {
+            border-color: var(--accent-indigo);
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.15), 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .category-select {
+            appearance: none; background-color: rgba(255,255,255,0.08); border: 1px solid var(--border-on-dark);
+            border-radius: 12px; padding: 0.6rem 1.2rem; font-family: 'Inter', sans-serif;
+            font-size: 0.85rem; color: var(--text-on-dark); cursor: pointer; outline: none;
+            transition: background 0.2s;
+        }
+        .category-select:hover { background-color: rgba(255,255,255,0.15); }
+
+        .gemini-textarea {
+            flex-grow: 1; border: none; background: transparent; resize: none;
+            padding: 0.5rem 0; font-family: 'Inter', sans-serif; font-size: 1.05rem;
+            line-height: 1.5; color: var(--text-on-dark); max-height: 200px; outline: none;
+        }
+        .gemini-textarea::placeholder { color: #71717a; }
+
+        .submit-btn {
+            background: var(--accent-indigo); border: none; border-radius: 50%; width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-bottom: 0.15rem;
+        }
+        .submit-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 0 15px var(--accent-indigo); }
+        .submit-btn:disabled { background: #3f3f46; color: #a1a1aa; cursor: not-allowed; transform: scale(1); box-shadow: none; }
+
+        .chat-bubble {
+            margin-bottom: 2rem;
+            width: 100%; max-width: 900px;
+            margin-left: auto; margin-right: auto;
+            animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .chat-bubble.user {
+            background: var(--bg-dark-element);
+            border: 1px solid #27272a;
+            color: var(--text-on-dark);
+            border-radius: 20px 20px 4px 20px;
+            max-width: 75%;
+            padding: 1.25rem 1.5rem;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-right: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .ai-card {
+            background: var(--bg-dark-element);
+            color: var(--text-on-dark);
+            border: 1px solid #27272a;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 1rem;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+        }
+        .ai-card h3 { font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin-bottom: 1.5rem; color: #ffffff; display: flex; align-items: center; gap: 10px; }
+        .ai-card h4 { color: var(--accent-cyan); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; margin-top: 1.5rem; }
+        .ai-card p { line-height: 1.7; color: #d4d4d8; }
+
+        /* Follow-Up Pills */
+        .follow-up-container { margin-top: 1.5rem; animation: slideUpFade 0.5s ease 0.3s both; }
+        .follow-up-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted-dark); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .follow-up-pills { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+        .follow-up-pill {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border-on-dark); color: var(--text-on-dark);
+            padding: 0.6rem 1rem; border-radius: 20px; font-size: 0.9rem; font-family: 'Inter', sans-serif;
+            cursor: pointer; text-align: left; transition: all 0.2s ease;
+        }
+        .follow-up-pill:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+
+        .uniqueness-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; padding: 15px; border-radius: 12px; font-family: 'Inter', sans-serif; }
+        .uniqueness-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .uniqueness-title { font-weight: 700; font-size: 1.2rem; }
+        .uniqueness-subtitle { font-size: 0.85rem; opacity: 0.9; font-weight: 500; }
+        .progress-bar-bg { width: 100%; background-color: rgba(255,255,255,0.1); border-radius: 6px; height: 8px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 6px; width: 0%; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .score-high { background-color: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #34d399; }
+        .score-high .progress-bar-fill { background-color: #34d399; }
+
+        .score-medium { background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .score-medium .progress-bar-fill { background-color: #fbbf24; }
+
+        .score-low { background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; }
+        .score-low .progress-bar-fill { background-color: #f87171; }
+
+        .primary-action-btn {
+            background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--border-on-dark);
+            padding: 0.8rem 1.5rem; border-radius: 12px; font-family: 'Inter', sans-serif; font-weight: 500;
+            cursor: pointer; width: 100%; transition: all 0.2s ease; font-size: 1rem;
+        }
+        .primary-action-btn:hover:not(:disabled) { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .primary-action-btn:active:not(:disabled) { transform: translateY(0); }
+
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+
+        .shark-tank-card {
+            background: var(--shark-bg); border-left: 4px solid var(--shark-accent);
+            border-top: 1px solid rgba(239,68,68,0.2); border-right: 1px solid rgba(239,68,68,0.2); border-bottom: 1px solid rgba(239,68,68,0.2);
+            box-shadow: -4px 0 20px rgba(239, 68, 68, 0.15);
+        }
+        .shark-btn { color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+        .shark-btn:hover:not(:disabled) { background: rgba(239, 68, 68, 0.1); border-color: var(--shark-accent); }
+
+        .persona-btn { color: #93c5fd; border-color: rgba(59, 130, 246, 0.3); }
+        .persona-btn:hover:not(:disabled) { background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
+
+        .mini-chat-box {
+            background: var(--bg-dark-hover); border: 1px solid var(--border-on-dark);
+            border-radius: 12px; padding: 1.25rem; margin-top: 15px; display: none;
+            animation: slideUpFade 0.3s ease forwards;
+        }
+        .mini-chat-history { max-height: 250px; overflow-y: auto; margin-bottom: 15px; font-size: 0.95rem; display: flex; flex-direction: column; gap: 10px; }
+        .mini-chat-input-row { display: flex; gap: 10px; }
+        .mini-chat-input { flex-grow: 1; padding: 10px 15px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-on-dark); color: white; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none; transition: border 0.2s; }
+        .mini-chat-input:focus { border-color: var(--accent-indigo); }
+        .mini-chat-send { background: var(--accent-indigo); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
+        .mini-chat-send:hover { background: #4f46e5; }
+
+        .regenerate-btn {
+            background: none; border: 1px solid var(--border-on-dark); color: var(--text-muted-dark);
+            border-radius: 12px; padding: 4px 10px; font-size: 0.75rem; cursor: pointer;
+            margin-left: 12px; transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .regenerate-btn:hover:not(:disabled) { background-color: rgba(255,255,255,0.1); color: #fff; }
+
+        .header-with-action { display: flex; align-items: center; margin-bottom: 5px; }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loading-pulse {
+            display: inline-flex; align-items: center; gap: 8px; font-weight: 500;
+            color: #09090b;
+        }
+        .spinner {
+            width: 16px; height: 16px; border: 2px solid rgba(0, 0, 0, 0.2);
+            border-top-color: #09090b; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <header class="top-bar"><span class="logo">Kinzoku.ai</span></header>
+
+        <main class="chat-container" id="chat-container">
+            <div class="welcome-screen" id="welcome-screen">
+                <h1 class="greeting">Hello, Mayuresh.</h1>
+                <p class="subtitle">What startup idea are we pitching today?</p>
+            </div>
+        </main>
+
+        <div class="input-container-fixed">
+            <div class="gemini-input-wrapper">
+                <div class="dropdown-wrapper">
+                    <select id="category-select" class="category-select">
+                        <option value="fitness" selected>Fitness</option>
+                        <option value="fintech">Fintech</option>
+                        <option value="edtech">EdTech</option>
+                        <option value="ecommerce">E-Commerce</option>
+                        <option value="saas">B2B SaaS</option>
+                    </select>
+                </div>
+                <textarea id="idea-input" class="gemini-textarea" placeholder="Describe your startup concept..." rows="1"></textarea>
+                <button id="submit-btn" class="submit-btn" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const textarea = document.getElementById('idea-input');
+            const submitBtn = document.getElementById('submit-btn');
+            const chatContainer = document.getElementById('chat-container');
+            const welcomeScreen = document.getElementById('welcome-screen');
+            let currentIdea = "";
+
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                submitBtn.disabled = this.value.trim() === '';
+            });
+
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!submitBtn.disabled) handleStage1Submit(textarea.value.trim());
+                }
+            });
+
+            submitBtn.addEventListener('click', () => handleStage1Submit(textarea.value.trim()));
+
+            async function handleStage1Submit(text) {
+                if (!text) return;
+                currentIdea = text;
+                if (welcomeScreen) welcomeScreen.style.display = 'none';
+                appendMessage(text, 'user');
+                textarea.value = ''; textarea.style.height = 'auto'; submitBtn.disabled = true;
+
+                const loadingId = appendMessage('Analyzing market positioning & running heuristics...', 'ai', true);
+                try {
+                    const response = await fetch('/stage1', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idea: text })
+                    });
+                    const data = await response.json();
+                    removeMessage(loadingId);
+                    if (!response.ok) throw new Error(data.error || "Unknown Backend Error");
+                    formatStage1Response(data.stage1);
+                } catch (error) {
+                    removeMessage(loadingId);
+                    appendMessage(`⚠️ <span style="color:#ef4444">Error:</span> ${error.message}`, 'ai');
+                }
+            }
+
+         function formatStage1Response(stage1Data) {
+                const div = document.createElement('div');
+                div.className = `chat-bubble ai`;
+
+                const uid = Date.now();
+                const sharkBtnId = `shark-btn-${uid}`;
+                const personaBtnId = `persona-btn-${uid}`;
+                const chatBoxId = `chat-box-${uid}`;
+                const chatHistoryId = `chat-history-${uid}`;
+                const chatInputId = `chat-input-${uid}`;
+                const chatSendId = `chat-send-${uid}`;
+
+                // Uniqueness Box Logic
+                let score = stage1Data.uniqueness || 0;
+                let scoreClass = 'score-low';
+                let scoreText = 'Highly saturated market. Pivot recommended.';
+                if (score >= 80) { scoreClass = 'score-high'; scoreText = 'Highly Unique Market Gap'; }
+                else if (score >= 50) { scoreClass = 'score-medium'; scoreText = 'Viable, but needs strong execution'; }
+
+                let uniquenessHtml = `
+                    <div class="uniqueness-wrapper ${scoreClass}">
+                        <div class="uniqueness-header"><span class="uniqueness-title">${score}% Originality Score</span></div>
+                        <div class="uniqueness-subtitle">${scoreText}</div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill uniqueness-bar" style="width: 0%;" data-target="${score}%"></div></div>
+                    </div>
+                `;
+
+                // Self-Made Box Logic
+                let smScore = stage1Data.self_made_rating || 0;
+                let smPercentage = smScore * 10;
+                let smClass = 'score-low';
+                let smText = 'Heavy corporate backing or unfair market advantage detected.';
+                if (smPercentage >= 80) { smClass = 'score-high'; smText = 'True Bootstrapped / High Self-Made Potential'; }
+                else if (smPercentage >= 50) { smClass = 'score-medium'; smText = 'Moderate external support or resources required'; }
+
+                let selfMadeHtml = `
+                    <div class="uniqueness-wrapper ${smClass}" style="margin-top: 15px;">
+                        <div class="uniqueness-header"><span class="uniqueness-title">${smScore}/10 Self-Made Rating</span></div>
+                        <div class="uniqueness-subtitle">${smText}</div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill self-made-bar" style="width: 0%;" data-target="${smPercentage}%"></div></div>
+                    </div>
+                `;
+
+                // NEW: Highly Visible Follow-Up Questions
+                let followUpHtml = '';
+                if (stage1Data.follow_up_questions && stage1Data.follow_up_questions.length > 0) {
+                    followUpHtml = `
+                        <div style="margin: 20px 0; padding: 15px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px;">
+                            <p style="font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">⚡ Strategic Follow-Ups (Click to answer):</p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                ${stage1Data.follow_up_questions.map(q => `
+                                    <button class="follow-up-pill" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-on-dark); color: #fff; padding: 10px 15px; border-radius: 8px; text-align: left; cursor: pointer; transition: all 0.2s; width: 100%;">
+                                        👉 ${q}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="ai-card">
+                        <h3><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Stage 1: Strategy Locked</h3>
+
+                        ${uniquenessHtml}
+
+                        <h4>Target Persona</h4>
+                        <p><strong>Profile:</strong> ${stage1Data.audience.primary_persona}<br>
+                        <strong>Core Pain Point:</strong> ${stage1Data.audience.core_pain_point}</p>
+
+                        <h4>Market Value Proposition</h4>
+                        <p>${stage1Data.value_proposition}</p>
+
+                        <hr style="border: none; border-top: 1px solid #27272a; margin: 20px 0;">
+
+                        <h4>Competitors & Founder Background</h4>
+                        <p style="margin-bottom: 10px;">${stage1Data.list_of_competitors || 'No competitor data provided.'}</p>
+                        <p style="margin-bottom: 15px;">${stage1Data.founders_background || 'No background data provided.'}</p>
+
+                        ${selfMadeHtml}
+
+                        ${followUpHtml}
+
+                        <div class="action-grid">
+                            <button id="${sharkBtnId}" class="primary-action-btn shark-btn">🦈 Shark Tank Roast</button>
+                            <button id="${personaBtnId}" class="primary-action-btn persona-btn">💬 Pitch to Persona</button>
+                        </div>
+                        <button class="primary-action-btn generate-brand-btn" style="margin-top: 12px; background: var(--accent-indigo); border: none;">Build Brand Identity (Stage 2)</button>
+
+                        <!-- Hidden Mini Chat Box -->
+                        <div id="${chatBoxId}" class="mini-chat-box">
+                            <div id="${chatHistoryId}" class="mini-chat-history">
+                                <div style="color: var(--text-muted-dark); font-size: 0.85rem; text-align: center; margin-bottom: 10px;">Simulated connection established with target user.</div>
+                            </div>
+                            <div class="mini-chat-input-row">
+                                <input type="text" id="${chatInputId}" class="mini-chat-input" placeholder="Type your pitch...">
+                                <button id="${chatSendId}" class="mini-chat-send">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                chatContainer.appendChild(div);
+                chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+
+                setTimeout(() => {
+                    const uniqueBar = div.querySelector('.uniqueness-bar');
+                    if (uniqueBar) uniqueBar.style.width = uniqueBar.getAttribute('data-target');
+                    const smBar = div.querySelector('.self-made-bar');
+                    if (smBar) smBar.style.width = smBar.getAttribute('data-target');
+
+                    // Attach hover effects and click events to new pills
+                    div.querySelectorAll('.follow-up-pill').forEach(pill => {
+                        pill.addEventListener('mouseenter', function() { this.style.borderColor = 'var(--accent-cyan)'; this.style.background = 'rgba(6, 182, 212, 0.1)'; });
+                        pill.addEventListener('mouseleave', function() { this.style.borderColor = 'var(--border-on-dark)'; this.style.background = 'rgba(255,255,255,0.05)'; });
+                        pill.addEventListener('click', function() {
+                            const qText = this.textContent.replace('👉', '').trim();
+                            handleStage1Submit(qText);
+                        });
+                    });
+                }, 100);
+
+                div.querySelector('.generate-brand-btn').addEventListener('click', function() {
+                    this.disabled = true; this.innerHTML = '<span class="spinner" style="border-top-color:white; width:14px; height:14px;"></span> Processing...';
+                    handleStage2Submit(stage1Data);
+                });
+
+                document.getElementById(sharkBtnId).addEventListener('click', async function() {
+                    this.disabled = true; this.innerHTML = '<span class="spinner" style="border-top-color:#ef4444; width:14px; height:14px;"></span> Pitching...';
+                    const loadingId = appendMessage('Connecting to the Tank...', 'ai', true);
+
+                    try {
+                        const response = await fetch('/shark-tank', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ idea: currentIdea })
+                        });
+                        const data = await response.json();
+                        removeMessage(loadingId);
+
+                        const sDiv = document.createElement('div');
+                        sDiv.className = `chat-bubble ai`;
+                        sDiv.innerHTML = `
+                            <div class="ai-card shark-tank-card" style="background: var(--shark-bg); border-left: 4px solid var(--shark-accent); border-top: 1px solid rgba(239,68,68,0.2); border-right: 1px solid rgba(239,68,68,0.2); border-bottom: 1px solid rgba(239,68,68,0.2); box-shadow: -4px 0 20px rgba(239, 68, 68, 0.15);">
+                                <h3 style="color: #ef4444; font-size: 1.2rem; margin-bottom: 0.5rem;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> ${data.shark_tank.investor_persona}</h3>
+                                <p style="margin-bottom: 15px; font-style: italic; color: #fca5a5;">"${data.shark_tank.brutal_feedback}"</p>
+                                <div style="background: rgba(239,68,68,0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.2); color: #fff;"><strong>Verdict:</strong> ${data.shark_tank.decision}</div>
+                            </div>
+                        `;
+                        chatContainer.appendChild(sDiv);
+                    } catch (error) {
+                        removeMessage(loadingId);
+                    }
+                    this.innerHTML = '🦈 Shark Tank Roast'; this.disabled = false;
+                });
+
+                const chatBox = document.getElementById(chatBoxId);
+                const chatHistory = document.getElementById(chatHistoryId);
+                const chatInput = document.getElementById(chatInputId);
+                const chatSend = document.getElementById(chatSendId);
+
+                document.getElementById(personaBtnId).addEventListener('click', function() {
+                    chatBox.style.display = chatBox.style.display === 'block' ? 'none' : 'block';
+                });
+
+                chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') chatSend.click(); });
+
+                chatSend.addEventListener('click', async () => {
+                    const msg = chatInput.value.trim();
+                    if(!msg) return;
+
+                    chatHistory.innerHTML += `<div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px 12px 0 12px; margin-left: 20%; border: 1px solid var(--border-on-dark); color: white;"><strong>You:</strong> ${msg}</div>`;
+                    chatInput.value = '';
+                    chatSend.disabled = true;
+
+                    try {
+                        const response = await fetch('/persona-chat', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ persona: stage1Data.audience.primary_persona, pain_point: stage1Data.audience.core_pain_point, message: msg })
+                        });
+                        const data = await response.json();
+                        chatHistory.innerHTML += `<div style="background: rgba(6, 182, 212, 0.1); padding: 10px; border-radius: 12px 12px 12px 0; margin-right: 10%; border: 1px solid rgba(6, 182, 212, 0.2);"><strong style="color:var(--accent-cyan);">Persona (Interest: ${data.chat.interest_level}%):</strong><br> <span style="color: white;">${data.chat.reply}</span></div>`;
+                    } catch(e) {
+                        chatHistory.innerHTML += `<div style="color:#ef4444;">Connection failed.</div>`;
+                    }
+                    chatSend.disabled = false;
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                });
+            }
+
+            async function handleStage2Submit(stage1Data) {
+                const loadingId = appendMessage('Synthesizing brand identity vectors...', 'ai', true);
+                try {
+                    const response = await fetch('/stage2', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            primary_persona: stage1Data.audience.primary_persona,
+                            core_pain_point: stage1Data.audience.core_pain_point,
+                            value_proposition: stage1Data.value_proposition
+                        })
+                    });
+                    const data = await response.json();
+                    removeMessage(loadingId);
+
+                    const div = document.createElement('div');
+                    div.className = `chat-bubble ai`;
+
+                    const uid = Date.now();
+                    const namesDisplayId = `brand-names-${uid}`;
+                    const regenBtnId = `regen-btn-${uid}`;
+
+                    div.innerHTML = `
+                        <div class="ai-card" style="border-top: 4px solid ${data.stage2.color_code};">
+                            <h3><span style="display:inline-block; width:16px; height:16px; border-radius:50%; background:${data.stage2.color_code}; margin-right:8px; box-shadow: 0 0 10px ${data.stage2.color_code};"></span> Stage 2: Brand Engine</h3>
+
+                            <div class="header-with-action">
+                                <h4>Generated Names</h4>
+                                <button id="${regenBtnId}" class="regenerate-btn">↻ Regenerate</button>
+                            </div>
+
+                            <p id="${namesDisplayId}" style="font-size: 1.2rem; color: #fff; margin-bottom: 15px;"><strong>${data.stage2.brand_name.join(' <span style="color:#71717a">|</span> ')}</strong></p>
+
+                            <h4>Brand Voice</h4>
+                            <p>${data.stage2.brand_voice}</p>
+
+                            <button class="primary-action-btn stage3-trigger" style="margin-top:20px; border-color:var(--accent-cyan); color:var(--accent-cyan);">Generate Go-To-Market (Stage 3)</button>
+                        </div>
+                    `;
+                    chatContainer.appendChild(div);
+
+                    const regenBtn = document.getElementById(regenBtnId);
+                    const namesDisplay = document.getElementById(namesDisplayId);
+
+                    regenBtn.addEventListener('click', async function() {
+                        this.disabled = true; this.textContent = "↻ Generating...";
+                        namesDisplay.innerHTML = '<span class="loading-pulse"><span class="spinner" style="border-top-color:white;"></span> Thinking...</span>';
+
+                        try {
+                            const regenResponse = await fetch('/regenerate-names', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    primary_persona: stage1Data.audience.primary_persona,
+                                    core_pain_point: stage1Data.audience.core_pain_point,
+                                    value_proposition: stage1Data.value_proposition,
+                                    previous_names: data.stage2.brand_name
+                                })
+                            });
+
+                            const regenData = await regenResponse.json();
+                            data.stage2.brand_name = regenData.new_names;
+                            namesDisplay.innerHTML = `<strong>${regenData.new_names.join(' <span style="color:#71717a">|</span> ')}</strong>`;
+                        } catch (error) {
+                            namesDisplay.innerHTML = `<span style="color: #ef4444;">Error regenerating names.</span>`;
+                        } finally {
+                            this.textContent = "↻ Regenerate"; this.disabled = false;
+                        }
+                    });
+
+                    div.querySelector('.stage3-trigger').addEventListener('click', function() {
+                        this.disabled = true; this.innerHTML = '<span class="spinner" style="border-top-color:var(--accent-cyan); width:14px; height:14px;"></span> Finalizing...';
+                        handleStage3Submit(stage1Data, data.stage2);
+                    });
+                } catch(e) { removeMessage(loadingId); }
+            }
+
+            async function handleStage3Submit(stage1Data, stage2Data) {
+                const loadingId = appendMessage('Compiling launch mechanics...', 'ai', true);
+                try {
+                    const response = await fetch('/stage3', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...stage1Data.audience, brand_name: stage2Data.brand_name[0], color_code: stage2Data.color_code })
+                    });
+                    const data = await response.json();
+                    removeMessage(loadingId);
+
+                    const div = document.createElement('div');
+                    div.className = `chat-bubble ai`;
+                    div.innerHTML = `
+                        <div class="ai-card">
+                            <h3>🚀 Stage 3: Launch Protocol</h3>
+                            <h4>Visual Language</h4>
+                            <p>${data.stage3.visual_language}</p>
+                            <h4>Messaging Matrix</h4>
+                            <p>${data.stage3.voice_and_messaging}</p>
+                            <h4>Market Entry Vector</h4>
+                            <p>${data.stage3.market_entry_strategy}</p>
+                        </div>
+                    `;
+                    chatContainer.appendChild(div);
+                } catch(e) { removeMessage(loadingId); }
+            }
+
+            function appendMessage(text, sender, isLoading = false) {
+                const id = 'msg-' + Date.now();
+                const div = document.createElement('div');
+                div.id = id;
+                div.className = `chat-bubble ${sender}`;
+
+                if(isLoading) {
+                    div.innerHTML = `<span class="loading-pulse"><span class="spinner" style="border-top-color:#09090b;"></span> ${text}</span>`;
+                } else {
+                    div.innerHTML = text;
+                }
+
+                chatContainer.appendChild(div);
+                chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+                return id;
+            }
+
+            function removeMessage(id) {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            }
+        });
+    </script>
+</body>
+</html>
