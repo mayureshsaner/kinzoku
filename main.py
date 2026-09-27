@@ -8,7 +8,7 @@ from typing import List
 app = Flask(__name__)
 
 # Ensure you secure your API key in production (e.g., os.environ.get("GEMINI_API_KEY"))
-api_key = os.getenv("API_KEY")
+api_key ="AQ.Ab8RN6KAis90_WOfkYVsrETSaBSuhEarcRMjBEamiWJCFz9q9w"
 client = genai.Client(api_key=api_key)
 
 
